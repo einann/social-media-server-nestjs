@@ -1,0 +1,34 @@
+CASL kullanırken controller'lar içersinide şunu yazmak yerine:
+
+    const ability = this.abilityFactory.defineAbility(user);
+    const isAllowed = ability.can(Action.Create, User);
+    if (!isAllowed) {
+        throw new ForbiddenException('izin yok');
+    }
+    return this.service.createUser(user, file);
+
+Şu şekilde yazmak daha mantıklıdır:
+
+    const ability = this.abilityFactory.defineAbility(user);
+    try {
+      ForbiddenError.from(ability).throwUnlessCan(Action.Create, User);
+      return this.service.createUser(user, file);
+    }
+    catch (error) {
+      throw new ForbiddenException(error.message);
+    }
+
+*   factory içinde cannot(Action.Create, User).because('izin yok') gibi yazıp 
+    setMessage kısmını da ortadan kaldırmamız mümkündür.
+
+#########################################################################################################
+
+Bunları global yapmak için -> ability klasörünün içine abilities.decorator.ts dosyası.
+Daha sonra mesela user.controller'da Delete'de şu şekil:
+
+  @CheckAbilities({ action: Action.Delete, subject: User })
+
+Bu halde henüz bir işe yaramıyor. Bir tane de GUARD yazacağız.
+
+#########################################################################################################
+
