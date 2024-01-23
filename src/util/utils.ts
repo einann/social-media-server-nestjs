@@ -21,7 +21,8 @@ export async function uploadFile(destinationFolder: string, file: Express.Multer
     return new Promise((resolve, reject) => {
         try {
             fs.writeFileSync(fullFilePath, file.buffer);
-            resolve(fullFilePath);
+            // resolve(fullFilePath);
+            resolve(fileName);
         } catch (error) {
             throw new InternalServerErrorException();
         }

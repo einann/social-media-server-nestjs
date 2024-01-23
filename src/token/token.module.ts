@@ -6,10 +6,10 @@ import { Token } from './entities/token.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Token])
+    TypeOrmModule.forFeature([Token]),
   ],
   providers: [TokenService],
   controllers: [TokenController],
   exports: [TokenService]
 })
-export class TokenModule {}
+export class TokenModule { }

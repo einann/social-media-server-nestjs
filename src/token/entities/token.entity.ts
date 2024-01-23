@@ -9,8 +9,11 @@ export class Token {
     @Column()
     email: string;
 
-    @Column()
+    @Column({ nullable: true })
     resetToken: string;
+
+    @Column({ nullable: true })
+    verifyToken: string;
 
     @Column()
     createDate: string;

@@ -12,6 +12,7 @@ import { TokenModule } from './token/token.module';
 import config from 'config/config';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
+import { ImagesModule } from './images/images.module';
 
 @Module({
   imports: [
@@ -66,7 +67,7 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handleba
     FollowingListModule,
     AbilityModule,
     TokenModule,
-    // Diğer modüller ve hizmetler
+    ImagesModule,
   ],
 })
 export class AppModule { }

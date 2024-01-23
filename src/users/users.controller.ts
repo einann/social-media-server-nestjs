@@ -29,6 +29,8 @@ import { CheckAbilities } from 'src/ability/abilities.decorator';
 import { User } from './user.entity';
 import { CreateUserAbility, ReadUserAbility, UpdateUserAbility } from 'src/ability/entity_abilities/user.abilities';
 import { PasswordResetDto } from './dto/password-reset.dto';
+import { Public } from 'src/auth/constants/auth.constants';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 
 @Controller('users')
 export class UsersController {
@@ -54,9 +56,10 @@ export class UsersController {
     return this.service.getUsers(filter);
   }
 
+  @Public()
   @Post()
-  @UseGuards(AbilitiesGuard)
-  @CheckAbilities(new CreateUserAbility())
+  // @UseGuards(AbilitiesGuard)
+  // @CheckAbilities(new CreateUserAbility())
   @UseInterceptors(FileInterceptor('file'))
   @UsePipes(ImageValidatorPipe)
   create(
@@ -66,7 +69,26 @@ export class UsersController {
     return this.service.createUser(user, file);
   }
 
-  @Post('passwordreset')
+  @Post('verify')
+  createNewVerification(
+    @Request() request: Request,
+  ) {
+    return this.service.createNewVerifyToken(request);
+  }
+
+  // Forgot Password
+  @Public()
+  @Post('forgotpassword')
+  forgotPassword(
+    @Body() forgotPasswordDto: ForgotPasswordDto
+  ) {
+    return this.service.forgotPassword(forgotPasswordDto);
+  }
+  //
+
+  @Public()
+  @Post('resetpassword/:token')
+  @UseInterceptors(FileInterceptor('file'))
   @HttpCode(HttpStatus.OK)
   resetPassword(
     @Request() request: Request,

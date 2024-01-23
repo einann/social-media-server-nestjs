@@ -31,18 +31,23 @@ export class CommentsService {
     }
 
     async getComments(filter: GetFilterType): Promise<Comment[]> {
-        const comments = await getData(
-            this.commentsRepository,
-            'comment',
-            filter,
-            [
-                { sourceField: 'comment.parentId', targetTable: 'entry', condition: '' },   // Joins parent entry of comment
-                { sourceField: 'comment.likes', targetTable: 'likes', condition: '' },      // Joins likes of comment
-                { sourceField: 'likes.user', targetTable: 'user', condition: '' },          // Joins users of likes of comment
-            ],
-            ['comment', 'entry', 'likes', 'user.username', 'user.authLevel', 'user.firstName', 'user.lastName', 'user.profilePicture', 'user.gender']
-        );
-        return comments;
+        try {
+            const comments = await getData(
+                this.commentsRepository,
+                'comment',
+                filter,
+                [
+                    // { sourceField: 'comment.parentId', targetTable: 'entry', condition: '' },   // Joins parent entry of comment
+                    { sourceField: 'comment.likes', targetTable: 'likes', condition: '' },      // Joins likes of comment
+                    { sourceField: 'likes.user', targetTable: 'user', condition: '' },          // Joins users of likes of comment
+                ],
+                ['comment', 'likes', 'user.username', 'user.authLevel', 'user.firstName', 'user.lastName', 'user.profilePicture', 'user.gender']
+            );
+            return comments;
+        } catch (error) {
+            console.log(error)
+            throw new NotFoundException();
+        }
     }
 
     async createComment(request: Request, comment: Comment) {
@@ -58,7 +63,7 @@ export class CommentsService {
         });
 
         try {
-            await this.commentsRepository.save(commentReadyToBeInsterted);
+            const result = await this.commentsRepository.save(commentReadyToBeInsterted);
         } catch (error) {
             console.log(error);
             throw new InternalServerErrorException();

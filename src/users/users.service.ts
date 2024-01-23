@@ -10,12 +10,15 @@ import { GetFilterType, FormattedDateType } from 'src/types/types';
 import { AbilityFactory, Action } from 'src/ability/ability.factory';
 import { PasswordResetDto } from './dto/password-reset.dto';
 import { TokenService } from 'src/token/token.service';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { CustomError } from 'src/util/custom-error';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
   constructor(
-    private readonly configService: ConfigService,
     @InjectRepository(User) private usersRepository: Repository<User>,
+    private readonly configService: ConfigService,
     private abilityFactory: AbilityFactory,
     private tokenService: TokenService,
   ) { }
@@ -44,15 +47,21 @@ export class UsersService {
     const currentDate: FormattedDateType = getFormattedDate();
     const userReadyToBeInsterted = Object.assign({}, user, {
       password: hashedPassword,
-      profilePicture: fileUrl,
+      profilePicture: `${this.configService.get<string>("site_url")}/images/pic=${fileUrl}`,
       signupDate: currentDate.fullDate,
       lastLoginDate: currentDate.fullDate,
       authLevel: "user",
       active: "true",
+      verified: "false",
     });
 
     try {
-      await this.usersRepository.save(userReadyToBeInsterted);
+      const createdUser = await this.usersRepository.save(userReadyToBeInsterted);
+      const { password, ...user } = createdUser;
+
+      const verifyToken = await this.tokenService.createVerifyToken(createdUser);
+
+      return user;
     } catch (err) {
       console.log(err);
       throw new InternalServerErrorException();
@@ -96,25 +105,58 @@ export class UsersService {
     }
   }
 
-  async resetPassword(request: Request, passwordObj: PasswordResetDto) {
-    if (passwordObj.password !== passwordObj.passwordRepeat) {
-      throw new BadRequestException("Password repeat doesn't match.");
-    }
-    const existingUser = await this.getSingleUser(request['user'].username);
-    if (!existingUser) {
-      throw new NotFoundException("User not found.");
-    }
-    const doesPasswordMatch = await bcrypt.compare(passwordObj.previousPassword, existingUser.password);
-    if (!doesPasswordMatch) {
-      throw new ForbiddenException();
-    }
+  async forgotPassword(emailObj: ForgotPasswordDto) {
+    const user = await this.findByUsernameOrEmail("", emailObj.email);
     try {
-      const recentPassword = await this.hashPassword(passwordObj.password);
-      await this.usersRepository.update({ username: existingUser.username }, { password: recentPassword });
-      await this.tokenService.remove(existingUser.username);
+      const resetToken = await this.tokenService.createResetToken(user.username, emailObj.email);
+      return { resetToken };
     } catch (error) {
-      throw new NotFoundException();
+      throw new BadRequestException();
     }
+  }
+
+  async resetPassword(request: Request, passwordObj: PasswordResetDto) {
+    const token = request['params'].token;
+    const existingToken = await this.tokenService.findOneByToken(token);
+    if (existingToken.expireDate < new Date()) throw new NotFoundException("Token expired.");
+    if (passwordObj.password !== passwordObj.passwordRepeat) throw new BadRequestException();
+    try {
+      const hashedPassword = await this.hashPassword(passwordObj.password);
+      const result = await this.usersRepository.update({ username: existingToken.username }, { password: hashedPassword });
+      return result;
+    }
+    catch (error) {
+      throw new BadRequestException();
+    }
+
+    return;
+    // if (passwordObj.password !== passwordObj.passwordRepeat) {
+    //   throw new BadRequestException("Password repeat doesn't match.");
+    // }
+    // const existingUser = await this.getSingleUser(request['user'].username);
+    // if (!existingUser) {
+    //   throw new NotFoundException("User not found.");
+    // }
+    // const doesPasswordMatch = await bcrypt.compare(passwordObj.previousPassword, existingUser.password);
+    // if (!doesPasswordMatch) {
+    //   throw new ForbiddenException();
+    // }
+    // try {
+    //   const recentPassword = await this.hashPassword(passwordObj.password);
+    //   await this.usersRepository.update({ username: existingUser.username }, { password: recentPassword });
+    //   await this.tokenService.remove(existingUser.username);
+    // } catch (error) {
+    //   throw new NotFoundException();
+    // }
+  }
+
+  async createNewVerifyToken(request: Request) {
+    const username = request['user'] && request['user'].username ? request['user'].username : null;
+    if (!username) throw new NotFoundException();
+    const foundUser = await this.findByUsernameOrEmail(username, "");
+    if (!foundUser) throw new NotFoundException();
+    const verifyToken = await this.tokenService.createVerifyToken(foundUser);
+    return verifyToken;
   }
 
   // UTIL

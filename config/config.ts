@@ -1,4 +1,5 @@
 export default () => ({
+    site_url: process.env.SITE_URL,
     secret_key: process.env.SECRET_KEY,
     pp_upload_path: process.env.PP_UPLOAD_PATH,
     entry_image_path: process.env.ENTRY_IMAGE_PATH,

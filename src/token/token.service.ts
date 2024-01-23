@@ -6,6 +6,7 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { generateRandomString, getFormattedDate } from 'src/util/utils';
 import { FormattedDateType } from 'src/types/types';
 import { CustomError } from 'src/util/custom-error';
+import { User } from 'src/users/user.entity';
 
 @Injectable()
 export class TokenService {
@@ -15,16 +16,7 @@ export class TokenService {
     private readonly mailerService: MailerService,
   ) { }
 
-  async create(request: Request) {
-    const { username, email } = request['user'];
-
-    const existingToken = await this.findOne(username);
-    if (existingToken && existingToken.expireDate > new Date()) {
-      return {
-        message: "You can reset your password by clicking to link on your e-mail."
-      }
-    }
-
+  async createResetToken(username: string, email: string) {
     const expireDate = Date.now() + (10 * 60 * 1000); // 10 minutes
     const currentDate: FormattedDateType = getFormattedDate();
     const resetToken = generateRandomString(50);
@@ -35,18 +27,42 @@ export class TokenService {
       createDate: currentDate.fullDate,
       createTime: currentDate.fullTime,
       expireDate: new Date(expireDate),
+      verifyToken: null,
     }
-
     try {
       await this.tokenRepository.save(tokenObj);
       await this.sendResetMail(email, resetToken);
+      return resetToken;
     } catch (error) {
       await this.tokenRepository.delete(username);
-      throw new CustomError(500, "An error occured, please try again later");
+      throw new CustomError(500, "An error occured, please try again later.");
     }
+  }
 
+  //
+  async createVerifyToken(user: User) {
+    const expireDate = Date.now() + (10 * 60 * 1000); // 10 minutes
+    const currentDate: FormattedDateType = getFormattedDate();
+    const verifyToken = generateRandomString(50);
+    const tokenObj = {
+      username: user.username,
+      email: user.email,
+      verifyToken,
+      createDate: currentDate.fullDate,
+      createTime: currentDate.fullTime,
+      expireDate: new Date(expireDate),
+      resetToken: null,
+    }
+    try {
+      await this.tokenRepository.save(tokenObj);
+      await this.sendVerifyMail(user.email, verifyToken);
+    } catch (error) {
+      // await this.tokenRepository.delete(user.username);
+      throw new CustomError(500, "An error occured, please try again later.");
+    }
     return tokenObj;
   }
+  //
 
   async sendResetMail(email: string, link: string) {
     return await this.mailerService.sendMail({
@@ -56,7 +72,20 @@ export class TokenService {
       html:
         `
           <p>In order to reset your password, please click the link below:</p>
-          <a href="http://localhost:3001/reset-password?token=${link}">Reset Password</a>
+          <a href="http://localhost:3000/changepassword?token=${link}">Reset Password</a>
+        `
+    });
+  }
+
+  async sendVerifyMail(email: string, link: string) {
+    return await this.mailerService.sendMail({
+      to: email,
+      from: 'noreply@nestjs.com',
+      subject: 'Account Verification',
+      html:
+        `
+          <p>In order to verify your account, please click the link below:</p>
+          <a href="http://localhost:3000/verify?token=${link}">Verify Account</a>
         `
     });
   }
@@ -70,6 +99,14 @@ export class TokenService {
       where: [{ username: _username }],
     });
     return token;
+  }
+
+  async findOneByToken(token: string) {
+    const record = await this.tokenRepository.findOne({
+      where: [{ resetToken: token }],
+    });
+    if (!record) throw new NotFoundException();
+    return record;
   }
 
   async remove(_username: string) {

@@ -1,4 +1,4 @@
-import { IsString, IsDateString, MaxLength, IsEmail, IsNotEmpty, IsOptional, MinLength } from "class-validator";
+import { IsString, IsDateString, MaxLength, IsEmail, IsNotEmpty, IsOptional, MinLength, IsEmpty } from "class-validator";
 import { FollowingList } from "src/following_list/following_list.entity";
 import { Likes } from "src/likes/likes.entity";
 import { User } from "../user.entity";
@@ -65,6 +65,10 @@ export class CreateUserDto {
   @MaxLength(6)
   @IsString()
   gender: string;
+
+  @IsOptional()
+  @IsString()
+  verified: string;
 
   @IsOptional()
   likes: Likes[];

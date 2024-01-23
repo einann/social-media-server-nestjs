@@ -11,8 +11,6 @@ export class Comment {
     @ManyToOne(() => Entry, entries => entries.comments)
     parentId: Entry;
 
-    
-
     @Column()
     content: string;
 

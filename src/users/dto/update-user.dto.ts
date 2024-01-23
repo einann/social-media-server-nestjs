@@ -1,4 +1,4 @@
-import { IsString, IsBoolean, IsNumber, IsDateString, MaxLength, IsEmail, IsNotEmpty, IsOptional, MinLength, IsArray } from "class-validator";
+import { IsString, IsBoolean, IsNumber, IsDateString, MaxLength, IsEmail, IsNotEmpty, IsOptional, MinLength, IsArray, IsEmpty } from "class-validator";
 import { Likes } from "src/likes/likes.entity";
 
 export class UpdateUserDto {
@@ -62,6 +62,10 @@ export class UpdateUserDto {
     @MaxLength(6)
     @IsString()
     gender: string;
+
+    @IsOptional()
+    @IsString()
+    verified: string;
 
     @IsOptional()
     likes: Likes[];

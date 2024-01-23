@@ -3,15 +3,9 @@ import { TokenService } from './token.service';
 
 @Controller('token')
 export class TokenController {
-  constructor(private readonly tokenService: TokenService) { }
-
-  @Post()
-  @HttpCode(HttpStatus.OK)
-  create(
-    @Req() request: Request,
-  ) {
-    return this.tokenService.create(request);
-  }
+  constructor(
+    private readonly tokenService: TokenService,
+  ) { }
 
   @Get()
   findAll() {
@@ -21,6 +15,11 @@ export class TokenController {
   @Get(':username')
   findOne(@Param('username') username: string) {
     return this.tokenService.findOne(username);
+  }
+
+  @Get('by/:token')
+  findOneByToken(@Param('token') token: string) {
+    return this.tokenService.findOneByToken(token);
   }
 
   @Delete(':username')

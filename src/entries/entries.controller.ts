@@ -19,8 +19,6 @@ export class EntriesController {
     @HttpCode(HttpStatus.OK)
     @UsePipes(DecomposeFilterPipe)
     getMultiple(@Req() request, @Body() filter: GetFilterType) {
-        console.log(request)
-        console.log(filter)
         return this.service.getEntries(filter);
     }
 

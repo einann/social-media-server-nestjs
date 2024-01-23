@@ -21,7 +21,7 @@ export class FollowingListService {
             [
                 { sourceField: 'following_list.following', targetTable: 'user', condition: '' },
             ],
-            ['following_list', 'user.username', 'user.authLevel', 'user.firstName', 'user.lastName', 'user.profilePicture', 'user.gender']
+            ['following_list', 'user.username', 'user.active', 'user.authLevel', 'user.firstName', 'user.lastName', 'user.birthday', 'user.email', 'user.profilePicture', 'user.signupDate', 'user.lastLoginDate', 'user.gender', 'user.verified']
         );
         return followingList;
     }
@@ -35,7 +35,7 @@ export class FollowingListService {
             [
                 { sourceField: 'following_list.follower', targetTable: 'user', condition: '' },
             ],
-            ['following_list', 'user.username', 'user.authLevel', 'user.firstName', 'user.lastName', 'user.profilePicture', 'user.gender']
+            ['following_list', 'user.username', 'user.active', 'user.authLevel', 'user.firstName', 'user.lastName', 'user.birthday', 'user.email', 'user.profilePicture', 'user.signupDate', 'user.lastLoginDate', 'user.gender', 'user.verified']
         );
         return followingList;
     }

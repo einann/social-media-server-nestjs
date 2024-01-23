@@ -46,7 +46,11 @@ export class LikesService {
                 createDate: currentDate.fullDate,
                 createTime: currentDate.fullTime,
             });
-            await this.likesRepository.save(likesFinal);
+            const result = await this.likesRepository.save(likesFinal);
+            return {
+                ...result,
+                user: request['user'],
+            };
         } catch (error) {
             console.log(error);
             throw new NotFoundException();
@@ -57,10 +61,12 @@ export class LikesService {
         const entry = await this.likesRepository.createQueryBuilder('likes')
             .leftJoinAndSelect('likes.entry', 'entry')
             .where('entry.entryId = :entryId', { entryId: _id })
+            .andWhere('likes.user = :username', { username: request['user'].username })
             .getOne();
         const comment = await this.likesRepository.createQueryBuilder('likes')
             .leftJoinAndSelect('likes.comment', 'comment')
             .where('comment.commentId = :commentId', { commentId: _id })
+            .andWhere('likes.user = :username', { username: request['user'].username })
             .getOne();
         if (!entry && !comment) throw new NotFoundException();
 
@@ -68,8 +74,8 @@ export class LikesService {
             object: entry || comment,
             target: entry ? 'entry' : 'comment',
         }
-        const authVerified = this.verifyAuth(request, foundLike.target, foundLike.object);
-        if (!authVerified) throw new ForbiddenException();
+        // const authVerified = this.verifyAuth(request, foundLike.target, foundLike.object);
+        // if (!authVerified) throw new ForbiddenException();
         try {
             return await this.likesRepository.delete({ id: foundLike.object.id });
         }

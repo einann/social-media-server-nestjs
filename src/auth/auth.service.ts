@@ -1,8 +1,10 @@
-import { Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from 'src/users/users.service';
-import * as bcrypt from 'bcrypt';
 import { Response } from 'express';
+import * as bcrypt from 'bcrypt';
+
+const EXPIRE_TIME = 60 * 60 * 24 * 1000; // 1day
 
 @Injectable()
 export class AuthService {
@@ -26,17 +28,40 @@ export class AuthService {
             authLevel: user.authLevel,
         };
 
-        const access_token = await this.jwtService.signAsync(payload);
-
-        res.cookie('access_token', `Bearer ${access_token}`, {
-            httpOnly: true,
-            secure: true,
-            sameSite: 'none',
-            // expires: new Date(Date.now() + 1 * 24)
-        });
+        const { password, ...extUser } = user;
 
         return {
-            access_token: await this.jwtService.signAsync(payload),
+            user: extUser,
+            tokens: {
+                access_token: await this.jwtService.signAsync(payload, {
+                    expiresIn: '1d',
+                    secret: process.env.SECRET_KEY
+                }),
+                refresh_token: await this.jwtService.signAsync(payload, {
+                    expiresIn: '7d',
+                    secret: process.env.REFRESH_TOKEN_KEY
+                }),
+                expiresIn: new Date().setTime(new Date().getTime() + EXPIRE_TIME),
+            }
+        }
+    }
+
+    async setRefreshToken(user: any) {
+        const payload = {
+            username: user.username,
+            email: user.email,
+            authLevel: user.authLevel,
+        }
+        return {
+            access_token: await this.jwtService.signAsync(payload, {
+                expiresIn: '1d',
+                secret: process.env.SECRET_KEY
+            }),
+            refresh_token: await this.jwtService.signAsync(payload, {
+                expiresIn: '7d',
+                secret: process.env.REFRESH_TOKEN_KEY
+            }),
+            expiresIn: new Date().setTime(new Date().getTime() + EXPIRE_TIME),
         }
     }
 }

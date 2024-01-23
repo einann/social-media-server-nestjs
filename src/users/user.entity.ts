@@ -45,6 +45,9 @@ export class User {
   @Column()
   gender: string;
 
+  @Column()
+  verified: string;
+
   @OneToMany(() => Likes, likes => likes.user)
   likes: Likes[];
 }

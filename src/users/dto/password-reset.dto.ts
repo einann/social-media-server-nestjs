@@ -5,11 +5,6 @@ export class PasswordResetDto {
     @IsNotEmpty()
     @MaxLength(300)
     @IsString()
-    previousPassword: string;
-
-    @IsNotEmpty()
-    @MaxLength(300)
-    @IsString()
     password: string;
 
     @IsNotEmpty()

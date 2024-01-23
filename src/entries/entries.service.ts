@@ -60,7 +60,8 @@ export class EntriesService {
         });
 
         try {
-            await this.entriesRepository.save(entryReadyToBeInserted);
+            const response = await this.entriesRepository.save(entryReadyToBeInserted);
+            console.log(response)
         } catch (err) {
             console.log(err);
             throw new InternalServerErrorException();
